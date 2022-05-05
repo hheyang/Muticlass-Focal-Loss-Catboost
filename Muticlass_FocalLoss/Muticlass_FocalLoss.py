@@ -70,7 +70,7 @@ class MultiClassObjective(object):
                     temp2 = gamma * (1 - gamma) * pt * math.log(pt) + gamma * (1 - pt) * math.log(pt) + 2 * gamma * (1 - pt)
                     if j2 == target:
                     # j != target, j2 == target
-                        der2 = -pj * pt * ((1 - pt)**(gamma -1)) * temp2 + pj**2 * pt * ((1 - pt)**(gamma -1)) * temp1
+                        der2 = pj * pt * ((1 - pt)**(gamma -1)) * temp1 - pj * pt * ((1 - pt)**(gamma -1)) * temp2
                     elif j2 != target and j2 != j:
                     # j != target, j2 != target, j2 != j
                         der2 = (pj * pj2 * ((1 - pt)**(gamma - 1))) * temp1 + (pt * pj * pj2 * ((1 - pt)**(gamma - 2))) * temp2
