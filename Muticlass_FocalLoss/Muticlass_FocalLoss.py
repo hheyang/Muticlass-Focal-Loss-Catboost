@@ -50,34 +50,36 @@ class MultiClassObjective(object):
         hess = [] # hess矩阵
         for j in range(len(approxes)):
             # j != target
+            hess_row = [] # 生成hess矩阵每一行
             pj = p[j] # pj: 偏导所在类预测概率
             temp = ((1-pt)**(gamma-1)) * gamma * pt * math.log(pt) - ((1-pt)**(gamma))
-            der1 = -temp * pj
-            if j == target:
-                der1 = temp * (1-pt)
-            hess_row = [] # 生成hess矩阵每一行
-            for j2 in range(len(approxes)):
-                pj2 = p[j2] # pj2: 二次偏导所在类预测概率
-                if j == target:
-                    # j == target, j2 != j
-                    temp = (-(gamma**2) * pt * math.log(pt) + (gamma * math.log(pt) + 2 * gamma + 1) * (1 - pt))
-                    der2 = -pt * pj2 * ((1 - pt)**(gamma - 1)) * temp
-                    # j == target, j2 == j
-                    if j2 == j:
-                        der2 = pt * ((1 - pt)**gamma) * temp
-                else:
+            if j != target:
+                der1 = -temp * pj
+                for j2 in range(len(approxes)):
+                    pj2 = p[j2] # pj2: 二次偏导所在类预测概率
                     temp1 = gamma * pt * math.log(pt) + pt - 1
                     temp2 = gamma * (1 - gamma) * pt * math.log(pt) + gamma * (1 - pt) * math.log(pt) + 2 * gamma * (1 - pt)
                     if j2 == target:
                     # j != target, j2 == target
-                        der2 = pj * pt * ((1 - pt)**(gamma -1)) * temp1 - pj * pt * ((1 - pt)**(gamma -1)) * temp2
+                        der2 = pj * pt * ((1 - pt)**(gamma -1)) * (temp1 - temp2)
                     elif j2 != target and j2 != j:
                     # j != target, j2 != target, j2 != j
                         der2 = (pj * pj2 * ((1 - pt)**(gamma - 1))) * temp1 + (pt * pj * pj2 * ((1 - pt)**(gamma - 2))) * temp2
                     elif j2 == j:
                     # j != target, j2 == j
                         der2 = (pj * (pj - 1) * ((1 - pt)**(gamma - 1))) * temp1 + (pt * (pj**2) * ((1 - pt)**(gamma - 2))) * temp2
-                hess_row.append(-der2 * class_w[j2]) # 乘上类别权重,catboost中默认损失函数前面没有负号，推导中多加了负号
+                    hess_row.append(-der2 * class_w[j2]) # 乘上类别权重,catboost中默认损失函数前面没有负号，推导中多加了负号
+            else:
+                der1 = temp * (1-pt)
+                for j2 in range(len(approxes)):
+                    pj2 = p[j2] # pj2: 二次偏导所在类预测概率
+                    # j == target, j2 != j
+                    temp = (-(gamma**2) * pt * math.log(pt) + (gamma * math.log(pt) + 2 * gamma + 1) * (1 - pt))
+                    der2 = -pt * pj2 * ((1 - pt)**(gamma - 1)) * temp
+                    # j == target, j2 == j
+                    if j2 == j:
+                        der2 = pt * ((1 - pt)**gamma) * temp
+                    hess_row.append(-der2 * class_w[j2]) # 乘上类别权重,catboost中默认损失函数前面没有负号，推导中多加了负号
             grad.append(-der1 * class_w[j])
             hess.append(hess_row)
         return (grad, hess)
